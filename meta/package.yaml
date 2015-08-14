@@ -1,0 +1,10 @@
+name: mqtt-webbrick.paulcull
+vendor: Paul Cullender <paul@pkhome.co.uk>
+architecture: armhf
+icon: meta/sysinfo.svg
+source: https://github.com/paulcull/mqtt-webbrick
+version: 0.0.1
+services:
+ - name: mqtt-webbrick
+   description: "mqtt-webbrick: Listens for webbrick updates and publishes info over MQTT"
+   start: ./bin/mqtt-webbrick
