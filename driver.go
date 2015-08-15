@@ -31,7 +31,7 @@ var device = make(map[string]*WebbrickDevice)
 
 // WebbrickDriver holds info about our driver, including our configuration
 type WebbrickDriver struct {
-	support.DriverSupport
+	DriverSupport string//support.DriverSupport
 	config *webbrick.WebbrickDriverConfig
 	conn   string
 	publisher *mqttEngine
@@ -48,7 +48,6 @@ func defaultConfig() *webbrick.WebbrickDriverConfig {
 		NumberOfDevices: 0,
 		PollingMinutes:  5,
 		PollingActive:   false,
-		mqttEngine: nil,
 	}
 }
 
@@ -57,6 +56,7 @@ func NewWebBrickDriver(publisher *mqttEngine) (*WebbrickDriver, error) {
 
 	// Make a new WebbrickDriver. Ampersand means to make a new copy, not reference the parent one (so A = new B instead of A = new B, C = A)
 	driver := &WebbrickDriver{}
+	driver.publisher = publisher
 
 	// Initialize our driver. Throw back an error if necessary. Remember, := is basically a short way of saying "var blah string = 'abcd'"
 	// err := driver.Init(info)
@@ -76,8 +76,8 @@ func NewWebBrickDriver(publisher *mqttEngine) (*WebbrickDriver, error) {
 }
 
 // Start is where the fun and magic happens! The driver is fired up and starts finding sockets
-//func (d *WebbrickDriver) Start(config *webbrick.WebbrickDriverConfig) error {
-func (d *WebbrickDriver) Start(mqttEngine *mqttEngine) error {
+func (d *WebbrickDriver) Start(config *webbrick.WebbrickDriverConfig) error {
+//func (d *WebbrickDriver) Start(mqttEngine *mqttEngine) error {
 	log.Infof("Driver Starting with config %v", config)
 
 	d.config = config
@@ -85,7 +85,7 @@ func (d *WebbrickDriver) Start(mqttEngine *mqttEngine) error {
 		d.config = defaultConfig()
 	}
 
-	d.config.mqttEngine = mqttEngine
+	//d.config.mqttEngine = mqttEngine
 	
 
 	if started == false {
@@ -93,8 +93,12 @@ func (d *WebbrickDriver) Start(mqttEngine *mqttEngine) error {
 	}
 
 	//TODO:: change to publish - not tested below
-	d.config.mqttEngine.publish(d.config.mqttEngine.mqttEngine,"config ready")
-	return d.SendEvent("config", config)
+	//d.config.mqttEngine.publish(d.config.mqttEngine.mqttEngine,"config ready")
+	log.Infof("calling mqtt at " + d.publisher.murl.Host)
+
+	return nil
+
+	//return d.SendEvent("config", config)
 }
 
 func theloop(d *WebbrickDriver, config *webbrick.WebbrickDriverConfig) error {
@@ -130,14 +134,14 @@ func theloop(d *WebbrickDriver, config *webbrick.WebbrickDriverConfig) error {
 					case "existinglightchannelupdated":
 						log.Infof("  **** Light Device: %s", msg.DeviceInfo.DevID)
 						device[msg.DeviceInfo.DevID].Device.State = msg.DeviceInfo.State
-						device[msg.DeviceInfo.DevID].onOffChannel.SendState(msg.DeviceInfo.State)
+						// device[msg.DeviceInfo.DevID].onOffChannel.SendState(msg.DeviceInfo.State)
 						log.Infof("    ****  Set Brightness Level to : %s \n", strconv.FormatFloat(msg.DeviceInfo.Level, 'f', 2, 64))
-						device[msg.DeviceInfo.DevID].brightnessChannel.SendState(msg.DeviceInfo.Level)
+						// device[msg.DeviceInfo.DevID].brightnessChannel.SendState(msg.DeviceInfo.Level)
 
 					case "existingtempupdated": // Have got a temp sensor that we've already seen
 						log.Infof("  **** "+msg.Name+" Webbrick Temp seen again! DEV ID is ", msg.DeviceInfo.DevID)
 						log.Infof("    ****  Set Temp Level to : %s \n", strconv.FormatFloat(msg.DeviceInfo.Level, 'f', 2, 64))
-						device[msg.DeviceInfo.DevID].temperatureChannel.SendState(msg.DeviceInfo.Level)
+						// device[msg.DeviceInfo.DevID].temperatureChannel.SendState(msg.DeviceInfo.Level)
 
 					case "existingpirupdated": // Have got a pir sensor that we've already seen
 						log.Infof("  **** "+msg.Name+" Webbrick PIR seen again! DEV ID is ", msg.DeviceInfo.DevID)
@@ -146,7 +150,7 @@ func theloop(d *WebbrickDriver, config *webbrick.WebbrickDriverConfig) error {
 					case "existingpirtriggered": // Have got a pir sensor that we've already seen
 						log.Infof("  **** "+msg.Name+" Webbrick PIR seen again! DEV ID is ", msg.DeviceInfo.DevID)
 						// can send the trigger event now
-						device[msg.DeviceInfo.DevID].motionChannel.SendMotion()
+						// device[msg.DeviceInfo.DevID].motionChannel.SendMotion()
 
 					case "newwebbrickfound": // Have got a new webbrick, lets go see what it can do for us
 						log.Infof("  **** "+msg.Name+" Webbrick found! DEV ID is ", msg.DeviceInfo.DevID)
@@ -187,14 +191,14 @@ func theloop(d *WebbrickDriver, config *webbrick.WebbrickDriverConfig) error {
 							// State output is really just a temperature that we want to support
 							if msg.Name == "newtempfound" {
 								log.Infof("  **** Temp Device", msg.DeviceInfo.DevID)
-								_ = d.Conn.ExportChannel(device[msg.DeviceInfo.DevID], device[msg.DeviceInfo.DevID].temperatureChannel, "temperature")
-								device[msg.DeviceInfo.DevID].temperatureChannel.SendState(msg.DeviceInfo.Level)
+								// _ = d.Conn.ExportChannel(device[msg.DeviceInfo.DevID], device[msg.DeviceInfo.DevID].temperatureChannel, "temperature")
+								// device[msg.DeviceInfo.DevID].temperatureChannel.SendState(msg.DeviceInfo.Level)
 							}
 
 							// pir output is really just motion that we want to support
 							if msg.Name == "newpirfound" {
 								log.Infof("  **** PIR Device", msg.DeviceInfo.DevID)
-								_ = d.Conn.ExportChannel(device[msg.DeviceInfo.DevID], device[msg.DeviceInfo.DevID].motionChannel, "motion")
+								// _ = d.Conn.ExportChannel(device[msg.DeviceInfo.DevID], device[msg.DeviceInfo.DevID].motionChannel, "motion")
 								// Don't need to send a motion event, just create the device
 							}
 
@@ -203,11 +207,11 @@ func theloop(d *WebbrickDriver, config *webbrick.WebbrickDriverConfig) error {
 							if msg.Name == "newlightchannelfound" {
 								log.Infof("  **** Light Device: %s", msg.DeviceInfo.DevID)
 
-								_ = d.Conn.ExportChannel(device[msg.DeviceInfo.DevID], device[msg.DeviceInfo.DevID].onOffChannel, "on-off")
-								_ = d.Conn.ExportChannel(device[msg.DeviceInfo.DevID], device[msg.DeviceInfo.DevID].brightnessChannel, "brightness")
-								device[msg.DeviceInfo.DevID].onOffChannel.SendState(msg.DeviceInfo.State)
+								// _ = d.Conn.ExportChannel(device[msg.DeviceInfo.DevID], device[msg.DeviceInfo.DevID].onOffChannel, "on-off")
+								// _ = d.Conn.ExportChannel(device[msg.DeviceInfo.DevID], device[msg.DeviceInfo.DevID].brightnessChannel, "brightness")
+								// device[msg.DeviceInfo.DevID].onOffChannel.SendState(msg.DeviceInfo.State)
 								log.Infof("    ****  Set Brightness Level to : %s \n", strconv.FormatFloat(msg.DeviceInfo.Level, 'f', 6, 64))
-								device[msg.DeviceInfo.DevID].brightnessChannel.SendState(msg.DeviceInfo.Level)
+								// device[msg.DeviceInfo.DevID].brightnessChannel.SendState(msg.DeviceInfo.Level)
 							}
 
 						} else {
@@ -224,13 +228,13 @@ func theloop(d *WebbrickDriver, config *webbrick.WebbrickDriverConfig) error {
 							// Light output is really just an on-off and brightnessthat we want to support. Don't need colour, but
 							// don't know if NS really care about the non-colour lights
 							if msg.Name == "newlightchannelfound" {
-								device[msg.DeviceInfo.DevID].onOffChannel.SendState(msg.DeviceInfo.State)
-								device[msg.DeviceInfo.DevID].brightnessChannel.Set(msg.DeviceInfo.Level)
+								// device[msg.DeviceInfo.DevID].onOffChannel.SendState(msg.DeviceInfo.State)
+								// device[msg.DeviceInfo.DevID].brightnessChannel.Set(msg.DeviceInfo.Level)
 							}
 
 							// Temp sensor
 							if msg.Name == "newtempfound" {
-								device[msg.DeviceInfo.DevID].temperatureChannel.SendState(msg.DeviceInfo.Level)
+								// device[msg.DeviceInfo.DevID].temperatureChannel.SendState(msg.DeviceInfo.Level)
 							}
 
 						}

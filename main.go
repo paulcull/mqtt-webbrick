@@ -4,12 +4,12 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/paulcull/go-webbrick" // The magic part that lets us control devices
+	//"github.com/paulcull/go-webbrick" // The magic part that lets us control devices
 
-	"github.com/davecgh/go-spew/spew" // For neatly outputting stuff
-	"strconv" // For String construction
-	"time" // Used as part of "setInterval" and for pausing code to allow for data to come back
-	"fmt" //Output stuff to the screen
+	//"github.com/davecgh/go-spew/spew" // For neatly outputting stuff
+	//"strconv" // For String construction
+	//"time" // Used as part of "setInterval" and for pausing code to allow for data to come back
+	//"fmt" //Output stuff to the screen
 
 	"github.com/alecthomas/kingpin"
 	"github.com/juju/loggo"
@@ -23,11 +23,12 @@ var (
 	debug    = kingpin.Flag("debug", "Enable debug mode.").OverrideDefaultFromEnvar("DEBUG").Bool()
 	daemon   = kingpin.Flag("daemon", "Run in daemon mode.").Short('d').Bool()
 	mqttURL  = kingpin.Flag("mqttUrl", "The MQTT url to publish too.").Short('u').Default("tcp://localhost:1883").String()
+	logName  = kingpin.Flag("logName", "The Log Name.").Short('u').Default("webbrick-mqtt").String()
 	//port     = kingpin.Flag("port", "HTTP Port.").Short('i').OverrideDefaultFromEnvar("PORT").Default("9980").Int()
 	//path     = kingpin.Flag("path", "Path to static content.").Short('p').OverrideDefaultFromEnvar("CONTENT_PATH").Default("./public").String()
 	interval = kingpin.Flag("interval", "Publish interval.").Short('i').Default("30").Int()
 
-	log = loggo.GetLogger("mqtt_webbrick")
+	//log = loggo.GetLogger("mqtt_webbrick")
 )
 
 func main() {
@@ -71,8 +72,8 @@ func main() {
 func setupLoggo(debug bool) {
 	// apply flags
 	if debug {
-		loggo.GetLogger("").SetLogLevel(loggo.DEBUG)
+		loggo.GetLogger(*logName).SetLogLevel(loggo.DEBUG)
 	} else {
-		loggo.GetLogger("").SetLogLevel(loggo.INFO)
+		loggo.GetLogger(*logName).SetLogLevel(loggo.INFO)
 	}
 }

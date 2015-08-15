@@ -27,21 +27,35 @@ const (
 
 )
 
+type Device struct {
+	//ServiceAnnouncement
+	ID            string             `json:"id" redis:"id"`
+	NaturalID     string             `json:"naturalId" redis:"naturalId"`
+	NaturalIDType string             `json:"naturalIdType" redis:"naturalIdType"`
+	Name          *string            `json:"name,omitempty" redis:"name"`
+	ThingID       *string            `json:"thingId,omitempty" redis:"-"`
+	//Channels      *[]*Channel        `json:"channels,omitempty" redis:"-"`
+	Signatures    *map[string]string `json:"signatures,omitempty" redis:"signatures,json"`
+}
+
 // webBrickDevice holds info about our socket.
 type WebbrickDevice struct {
-	driver             ninja.Driver
-	info               *model.Device
+	driver             string//ninja.Driver
+	info               Device//*model.Device
 	sendEvent          func(event string, payload interface{}) error
 	// onOffChannel       *channels.OnOffChannel
 	// brightnessChannel  *channels.BrightnessChannel
 	// motionChannel      *channels.MotionChannel
 	// temperatureChannel *channels.TemperatureChannel
 	Device             webbrick.Device
-	log                *logger.Logger
+	// log                *loggo.Logger
 }
 
-func NewWebbrickDevice(driver ninja.Driver, id webbrick.Device) *WebbrickDevice {
+//func NewWebbrickDevice(driver ninja.Driver, id webbrick.Device) *WebbrickDevice {
+func NewWebbrickDevice(driver string, id webbrick.Device) *WebbrickDevice {
 	//name := id.Name
+
+	var log = loggo.GetLogger("webbrick-mqtt")
 
 	log.Infof("In creating NewWebbrickDevie", id.Name)
 
@@ -84,7 +98,7 @@ func NewWebbrickDevice(driver ninja.Driver, id webbrick.Device) *WebbrickDevice 
 	device := &WebbrickDevice{
 		driver: driver,
 		Device: id,
-		info: &model.Device{
+		info: &Device{
 			NaturalID:     fmt.Sprintf("%s", id.DevID),
 			NaturalIDType: devProductType,
 			Name:          &id.Name,
@@ -95,8 +109,11 @@ func NewWebbrickDevice(driver ninja.Driver, id webbrick.Device) *WebbrickDevice 
 				"ninja:thingType":    devThingType,
 			},
 		},
-		log: logger.GetLogger(devThingType + " Device - " + id.Name),
 	}
+
+		//info: id.DevID,
+		//log: loggo.GetLogger(devThingType + " Device - " + id.Name),
+		// log: loggo.GetLogger("webbrick-mqtt"),
 
 	log.Debugf(" ******* GOING TO CHECK FOR THE devProductType : %s", devProductType)
 
@@ -131,21 +148,22 @@ func (d *WebbrickDevice) SetBrightness(level float64) error {
 	webbrick.SetLightLevel(d.Device.DevID, level)
 
 	
-	d.brightnessChannel.SendState(level)
+	
+	//d.brightnessChannel.SendState(level)
 	return nil
 }
 
 func (d *WebbrickDevice) SetOnOff(state bool) error {
 	log.Debugf("Setting state to", state)
 	webbrick.SetState(d.Device.DevID, state)
-	d.onOffChannel.SendState(state)
+	//d.onOffChannel.SendState(state)
 	return nil
 }
 
 func (d *WebbrickDevice) ToggleOnOff() error {
 	log.Debugf("Toggling state")
 	webbrick.ToggleState(d.Device.DevID)
-	d.onOffChannel.SendState(d.Device.State)
+	//d.onOffChannel.SendState(d.Device.State)
 	return nil
 }
 
