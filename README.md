@@ -1,5 +1,7 @@
 # mqtt-webbrick
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/paulcull/mqtt-webbrick.svg)](https://greenkeeper.io/)
+
 This is a small service which uses bridges the go-webbrick onto an mqtt bus.
 
 # Thanks
